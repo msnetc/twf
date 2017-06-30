@@ -7,6 +7,7 @@ import javassist.bytecode.stackmap.BasicBlock;
 import org.activiti.engine.*;
 import org.activiti.engine.impl.persistence.entity.SuspensionState;
 import org.activiti.engine.repository.Deployment;
+import org.activiti.engine.repository.DeploymentBuilder;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -16,9 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.zip.ZipInputStream;
 
 @Component
 public class TwfServiceImpl implements  TwfService {
@@ -52,6 +55,32 @@ public class TwfServiceImpl implements  TwfService {
         return processInstance;
     }
 
+    public String DeployFiles(){
+        // 创建发布配置对象
+        DeploymentBuilder builder = repositoryService.createDeployment();
+        // 设置发布信息
+        builder.name("请假流程")// 添加部署规则的显示别名
+               .addClasspathResource("processes/leave/leave.bpmn")// 添加规则文件
+               .addClasspathResource("processes/leave/leave.bpmn.png");// 添加规则图片  不添加会自动产生一个图片不推荐
+        // 完成发布
+        Deployment deployment =builder.deploy();
+        String key = deployment.getKey();
+        return key;
+    }
+
+    public void deployZip() throws Exception {
+        // 创建发布配置对象
+        DeploymentBuilder builder = repositoryService.createDeployment();
+        // 获得上传文件的输入流程
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("diagrams/diagrams.zip");
+        ZipInputStream zipInputStream = new ZipInputStream(in);
+        // 设置发布信息
+        builder .name("请假流程")// 添加部署规则的显示别名
+                .addZipInputStream(zipInputStream );
+        // 完成发布
+        builder.deploy();
+    }
+    
     /**
      * 已部署流程列表
      */
